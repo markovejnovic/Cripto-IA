@@ -1,7 +1,7 @@
 \documentclass[a4paper, 12pt]{article}
 
 \usepackage[margin=1.0in]{geometry}
-\usepackage{amsmath}
+\usepackage{mathtools}
 \usepackage{amssymb}
 \usepackage{graphicx}
 \usepackage{hyperref}
@@ -80,8 +80,12 @@ party has no way of knowing if a message sent was sent by the expected party.
 \paragraph*{}
 \textit{Public-key ciphers} present themselves as a solution to both of these issues. Public-key ciphers are ciphers 
 which operate by using different keys for enciphering and deciphering.
-$$C = E_{k1}(M)$$
-$$M = D_{k2}(C)$$
+\begin{equation} \label{pk-encipher}
+C = E_{k1}(M)
+\end{equation}
+\begin{equation} \label{pk-decipher}
+M = D_{k2}(C)
+\end{equation}
 These ciphers are called "public-key" because the enciphering can be done in public. The enciphering key is called the 
 \textit{public key}, whereas, the deciphering key is denoted to as the \textit{private key}. Anyone is able to enipher 
 a message using the public key, but only specific people are able to decipher it with their private key. The most 
@@ -177,9 +181,9 @@ The computational time required for calculating $Y$ from $x$ is at worst $2log_2
 In figure \ref{fig:n-xy-time}, the relationship between the difference of time required to generate $Y$ and the time 
 to perform a discrete logarithm in order to calculate $x$, as performed by a simulation\footnote{The simulation was 
 written in \textit{python} and the data was plotted using \textit{matplotlib}. The exact code is published online at 
-the following link: INSERT-LINK.}\footnote{The outlier at is most likely due to incorrect time measurements by the 
-system. Reference the original code for more information as to why this might've ocurred.}.
-%TODO Insert link
+the following link: \url{https://github.com/markovejnovic/Cripto-IA}}\footnote{The outlier at is most likely due to 
+incorrect time measurements by the system. Reference the original code for more information as to why this might've 
+ocurred.}.
 \begin{figure}[ht]
 \includegraphics[width=12cm]{n_xy-time_relationship}
 \centering
@@ -187,6 +191,87 @@ system. Reference the original code for more information as to why this might've
 and $X$ using a \textit{brute-force} $X$ calculation algorithm.}
 \label{fig:n-xy-time}
 \end{figure}
+
+\section{The \textit{RSA} cipher}
+\paragraph*{}
+%TODO Introduction
+
+\subsection{Method}
+\paragraph*{}
+The \textit{RSA cipher} operates as follows. The enciphering key is $(e, n)$, where $e$ and $n$ are positive integers. 
+The deciphering key is a pair of positive integers $(d, n)$. The enciphering key is made public by all users, while the
+ deciphering key is kept secret. Enciphering is done by raising the message to the power of $e$, modulus $n$. 
+Deciphering is done by raising the ciphertext to the power $d$, modulus $n$.
+$$E(M) \equiv M^{e} \mod n$$
+$$D(C) \equiv C^{d} \mod n$$
+
+\paragraph*{}
+The enciphering keys are chosen as follows.
+$$n = p \cdot q$$
+where $p$ and $q$ are extremely large, random primes. $n$ must be greater than the numerical representation of $M$. 
+When $n$ is made public, it is computationally difficult to discover $p$ and $q$, as factorization of $n$ is 
+enormously difficult. The integer $d$ is picked to be a large, random integer which satisfies the following:
+$$gcd(d, (p - 1) \cdot (q - 1)) = 1$$
+ie. it is relatively prime to $(p - 1) \cdot (q - 1)$. $e$ is computed from $p$, $q$ and $d$, as such:
+$$e \cdot d \equiv 1 \mod (p-1) \cdot (q-1)$$
+%TODO Explain what the multiplicative inverse is
+
+\paragraph*{}
+The proof why this method satisfies (\ref{pk-encipher}) and (\ref{pk-decipher}) is given in the following section.
+
+\subsection{Proof}
+\paragraph*{}
+The proof for why this cipher satisfies both (\ref{pk-encipher}) and (\ref{pk-decipher}) relies on the 
+\textit{Euler-Fermat totient theorem}:
+\begin{equation} \label{euler-fermat-totient}
+M^{\phi (n)} \equiv 1 \mod n
+\end{equation}
+where $\phi(n)$ is the \textit{Euler totient function}. The \textit{Euler totient function} gives the number of 
+positive integers less than $n$ which are relatively prime to it. For prime numbers this is always $n-1$ (as they are 
+only divisible by 1 and themselves). Due to the multiplicative property of the \textit{Euler totient function}
+\footnote{The multiplicative property of the \textit{Euler totient function} $\phi(ab) = \phi(a)\phi(b)$ is proved by 
+the following: Let $A$, $B$ and $C$ be sets of nonnegative integers, which are relatively prime to $a$, $b$ and $ab$, 
+respectivelly, then there is a bijection mapping between $A \times B$ and $C$, trivially provable by the \textit{
+Chinese remainder theorem}.}, if $n = p \cdot q$ and $p$ and $q$ are prime:
+%TODO Actually prove this
+\begin{equation}
+\begin{split}
+\phi (n) & = \phi (p) \cdot \phi (q) \\
+         & = (p - 1) \cdot (q - 1) \\
+         & = pq - (p + q) + 1 \\
+         & = n - (p + q) + 1
+\end{split}
+\end{equation}
+Since $d$ was chosen to be relatively prime to $(p - 1) \cdot (q - 1)$, ie. to $\phi (n)$, it does, indeed, have a 
+multiplicative inverse in the finite field of modulo $\phi (n)$:
+\begin{equation} \label{ed-equiv-mod-phi}
+e \cdot d \equiv 1 \mod \phi(n)
+\end{equation}
+
+\paragraph*{}
+Based on the previous deductions, the following can be asserted for the enciphering and deciphering functions $E$ and 
+$D$.
+$$E(D(M)) \equiv D(M)^{e} \mod n \equiv M^{d^{e}} \mod n \Longleftrightarrow M^{e \cdot d} \mod n$$
+and
+$$D(E(M)) \equiv E(M)^{d} \mod n \equiv M^{e^{d}} \mod n \Longleftrightarrow M^{e \cdot d} \mod n$$
+From equation \ref{ed-equiv-mod-phi}, the following holds:
+$$M^{e \cdot d} \equiv M^{k \cdot \phi (n) + 1} \mod n\text{, for a positive integer $k$}$$
+According to equation \ref{euler-fermat-totient}:
+$$M^{\phi (p)} \equiv 1 \mod p \Longleftrightarrow M^{p - 1} \equiv 1 \mod p$$
+Because $p - 1$ divides $\phi (n)$:
+$$M^{k \cdot \phi (n) + 1} \equiv M \mod p$$
+Similary, for $q$:
+$$M^{k \cdot \phi (n) + 1} \equiv M \mod q$$
+Finally, due the multiplicative property of the modulus:
+$$M^{e \cdot d} \equiv M^{k \cdot \phi (n) + 1} \equiv M \mod n$$
+
+For any positive integer $M$ up to $n$, the previous statement, therefore, implies that $E$ and $D$ are inverse 
+functions, therefore achieving the goal of being ciphers.
+
+\subsection{Cryptographic security}
+\paragraph*{}
+The cryptographic security of this cipher lies in the fact that up to date, no algorithm exists for factoring $n$ with 
+the same efficency as enciphering the message.
 
 \pagebreak
 \begin{thebibliography}{9}
